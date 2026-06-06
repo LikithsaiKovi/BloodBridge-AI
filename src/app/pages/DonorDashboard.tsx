@@ -200,6 +200,7 @@ export default function DonorDashboard() {
   const [updatingAvailability, setUpdatingAvailability] = useState(false);
   const [availForm, setAvailForm] = useState({ status: 'eligible', date: '', inactive_trigger_comment: '' });
   const [shareMatch, setShareMatch] = useState<PendingMatch | null>(null);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const firstName = user?.name?.split(' ')[0] ?? 'Donor';
   const initials = user?.avatar_initials ?? user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() ?? 'D';
@@ -340,6 +341,21 @@ export default function DonorDashboard() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (!window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+      return;
+    }
+    setDeletingAccount(true);
+    try {
+      await donorsApi.delete(donorProfile!.donor_id);
+      window.location.href = '/auth'; // Redirect to sign in
+    } catch (err) {
+      console.error("Failed to delete account", err);
+      setDeletingAccount(false);
+      alert("Failed to delete account. Please try again.");
+    }
+  };
+
   const profile = donorProfile;
   const score = prediction?.donor_score ?? profile?.donor_score ?? 0;
   const availScore = Math.round((prediction?.availability_probability ?? profile?.availability_probability ?? 0) * 100);
@@ -381,6 +397,19 @@ export default function DonorDashboard() {
           <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/5" />
           <div className="absolute -bottom-8 -left-8 w-48 h-48 rounded-full bg-white/5" />
           <div className="absolute top-1/2 left-1/3 w-32 h-32 rounded-full bg-orange-400/20" />
+        </div>
+
+        {/* Delete Account Button */}
+        <div className="absolute top-0 right-0 p-4 z-10">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleDeleteAccount}
+            disabled={deletingAccount}
+            className="bg-white/10 text-white hover:bg-white/20 border-white/30 backdrop-blur-md"
+          >
+            {deletingAccount ? 'Deleting...' : 'Delete Account'}
+          </Button>
         </div>
 
         <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">

@@ -21,6 +21,14 @@ export default function PatientDashboard() {
   const patientId = user?.linked_patient_id;
   const [profile, setProfile] = useState<any>(null);
 
+  // New states for location confirmation
+  const [confirmingLocation, setConfirmingLocation] = useState(false);
+  const [confirmAddress, setConfirmAddress] = useState('');
+  const [locationStatusMsg, setLocationStatusMsg] = useState('');
+
+  // New state for account deletion
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
   useEffect(() => {
     if (!patientId) {
       setProfile({ error: true });
@@ -99,6 +107,39 @@ export default function PatientDashboard() {
     }
   };
 
+  const handleConfirmLocation = async () => {
+    setConfirmingLocation(true);
+    try {
+      await patientsApi.confirmLocation(patientId!, {
+        address: confirmAddress || profile.preferred_location_name || profile.hospital,
+        latitude: profile.preferred_latitude,
+        longitude: profile.preferred_longitude,
+      });
+      setLocationStatusMsg("✅ Location shared with confirmed donors!");
+    } catch (err) {
+      console.error("Failed to confirm location", err);
+      setLocationStatusMsg("❌ Failed to share location.");
+    } finally {
+      setConfirmingLocation(false);
+      setTimeout(() => setLocationStatusMsg(''), 5000);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+      return;
+    }
+    setDeletingAccount(true);
+    try {
+      await patientsApi.delete(patientId!);
+      window.location.href = '/auth'; // Redirect to sign in
+    } catch (err) {
+      console.error("Failed to delete account", err);
+      setDeletingAccount(false);
+      alert("Failed to delete account. Please try again.");
+    }
+  };
+
   return (
     <div className="min-h-screen p-4 md:p-8 space-y-6 max-w-7xl mx-auto pb-24 lg:pb-8">
       
@@ -129,6 +170,18 @@ export default function PatientDashboard() {
                   <MapPin className="w-4 h-4" /> {profile.city || 'Unknown City'}
                 </span>
               </div>
+            </div>
+            {/* Delete Account Button */}
+            <div className="absolute top-0 right-0 p-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleDeleteAccount}
+                disabled={deletingAccount}
+                className="bg-red-500/10 text-red-100 hover:bg-red-500/20 border-red-500/30"
+              >
+                {deletingAccount ? 'Deleting...' : 'Delete Account'}
+              </Button>
             </div>
           </div>
 
@@ -166,6 +219,46 @@ export default function PatientDashboard() {
                 {daysUntil <= 3 ? `URGENT: Your transfusion is in ${daysUntil} day(s).` : `Notice: Your transfusion is coming up in ${daysUntil} days.`}
               </p>
               <p className="text-sm opacity-80">We are monitoring your matched donors and ensuring blood availability.</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 2.5 Day-of Transfusion Location Confirmation */}
+      <AnimatePresence>
+        {daysUntil <= 1 && !isOverdue && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-6 rounded-3xl bg-white border-2 border-red-100 shadow-xl"
+          >
+            <div className="flex flex-col md:flex-row items-center gap-6 justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                  <MapPin className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-lg">Confirm Transfusion Location</h3>
+                  <p className="text-sm text-gray-600">Please confirm your hospital address so we can notify your confirmed donors.</p>
+                </div>
+              </div>
+              <div className="flex-1 w-full md:max-w-md flex flex-col gap-2">
+                <input 
+                  type="text" 
+                  value={confirmAddress} 
+                  onChange={(e) => setConfirmAddress(e.target.value)}
+                  placeholder={profile.preferred_location_name || profile.hospital || "Enter full hospital address..."}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
+                />
+                <Button 
+                  onClick={handleConfirmLocation} 
+                  disabled={confirmingLocation}
+                  className="bg-gradient-to-r from-red-600 to-pink-600 text-white hover:from-red-700 hover:to-pink-700 w-full"
+                >
+                  {confirmingLocation ? "Broadcasting..." : "Share Location with Donors"}
+                </Button>
+                {locationStatusMsg && <p className="text-sm text-center font-medium mt-1">{locationStatusMsg}</p>}
+              </div>
             </div>
           </motion.div>
         )}

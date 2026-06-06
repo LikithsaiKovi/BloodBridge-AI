@@ -11,6 +11,9 @@ class PatientCreate(BaseModel):
     city: str
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    preferred_location_name: Optional[str] = None
+    preferred_latitude: Optional[float] = None
+    preferred_longitude: Optional[float] = None
     next_transfusion_date: str
     last_transfusion_date: Optional[str] = None
     urgency_level: str = "medium"
@@ -46,6 +49,9 @@ class DonorCreate(BaseModel):
     city: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    preferred_location_name: Optional[str] = None
+    preferred_latitude: Optional[float] = None
+    preferred_longitude: Optional[float] = None
     last_donation_date: Optional[str] = None
     next_eligible_date: Optional[str] = None
     eligibility_status: str = "eligible"

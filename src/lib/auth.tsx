@@ -36,6 +36,11 @@ export interface RegisterData {
   blood_group?: string;
   city?: string;
   phone?: string;
+  latitude?: number;
+  longitude?: number;
+  preferred_location_name?: string;
+  preferred_latitude?: number;
+  preferred_longitude?: number;
   // Donor
   last_donation_date?: string;
   frequency_in_days?: number;

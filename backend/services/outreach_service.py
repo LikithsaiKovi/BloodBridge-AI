@@ -187,6 +187,9 @@ def generate_message(
     language: str,
     needed_by: Optional[str] = None,
     streak: int = 0,
+    location_name: Optional[str] = None,
+    location_lat: Optional[float] = None,
+    location_lon: Optional[float] = None,
 ) -> dict:
     """
     Generate a localized donor message.
@@ -206,8 +209,26 @@ def generate_message(
         streak=streak,
     )
 
+    if location_name or (location_lat and location_lon):
+        location_text = "\n📍 Location:"
+        if location_name:
+            location_text += f" {location_name}"
+        if location_lat and location_lon:
+            location_text += f"\n🗺️ Maps: https://maps.google.com/?q={location_lat},{location_lon}"
+        
+        if "With gratitude," in body:
+            body = body.replace("With gratitude,", f"{location_text}\n\nWith gratitude,")
+        elif "आभार" in body:
+            body = body.replace("आभार", f"{location_text}\n\nआभार")
+        elif "కృతజ్ఞతలతో," in body:
+            body = body.replace("కృతజ్ఞతలతో,", f"{location_text}\n\nకృతజ్ఞతలతో,")
+        elif "कृतज्ञतेसह," in body:
+            body = body.replace("कृतज्ञतेसह,", f"{location_text}\n\nकृतज्ञतेसह,")
+        else:
+            body += f"\n{location_text}"
+
     if settings.use_bedrock:
-        body = _generate_with_bedrock(donor_name, blood_group, message_type, language, needed_by, streak)
+        body = _generate_with_bedrock(donor_name, blood_group, message_type, language, needed_by, streak, location_name, location_lat, location_lon)
 
     return {
         "title": type_template["title"],
@@ -221,7 +242,8 @@ def generate_message(
 
 def _generate_with_bedrock(
     donor_name: str, blood_group: str, message_type: str,
-    language: str, needed_by: str, streak: int
+    language: str, needed_by: str, streak: int,
+    location_name: Optional[str] = None, location_lat: Optional[float] = None, location_lon: Optional[float] = None
 ) -> str:
     """Call Amazon Bedrock Claude Haiku to generate a message."""
     try:
@@ -234,9 +256,13 @@ def _generate_with_bedrock(
             f"You are a compassionate blood donation coordinator. Generate a {message_type} message in {language} "
             f"for a blood donor named {donor_name} who has {streak} previous donations. "
             f"The patient urgently needs {blood_group} blood by {needed_by}. "
-            f"Keep it warm, personal, and motivating. Max 150 words. "
-            f"End with 'BloodBridge AI 🩸'"
         )
+        if location_name:
+            prompt += f"The required location for donation is {location_name}. "
+        if location_lat and location_lon:
+            prompt += f"Include this Google Maps link: https://maps.google.com/?q={location_lat},{location_lon}. "
+            
+        prompt += "Keep it warm, personal, and motivating. Max 150 words. End with 'BloodBridge AI 🩸'"
 
         body = json.dumps({
             "anthropic_version": "bedrock-2023-05-31",

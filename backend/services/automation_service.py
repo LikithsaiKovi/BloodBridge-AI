@@ -625,11 +625,13 @@ def _build_consolidated_message(donor: Dict, matches: List[Dict], reminder: bool
     ]
 
     for idx, match in enumerate(matches, 1):
-        msg_lines.append(
+        match_line = (
             f"{idx}. Patient {_mask_name(match['patient_name'])} ({match['blood_group']}) "
             f"in {match['city']}, needed by {match['needed_by']}, "
             f"{match['distance_km']}km away [{match['urgency'].upper()}]"
         )
+            
+        msg_lines.append(match_line)
 
     msg_lines.extend([
         "",
@@ -644,7 +646,8 @@ def _build_direct_patient_request_message(donor: Dict, match: Dict) -> str:
     """Build an SMS-friendly plain text direct request message."""
     donor_name = donor.get("name", "Hero")
     distance_text = f"{match['distance_km']}km" if isinstance(match.get("distance_km"), (int, float)) else "nearby"
-    return "\n".join([
+    
+    msg_lines = [
         "[BloodBridge AI Alert]",
         f"Hi {donor_name}, a patient needs your help.",
         f"Patient: {_mask_name(match.get('patient_name', 'Patient'))}",
@@ -654,9 +657,13 @@ def _build_direct_patient_request_message(donor: Dict, match: Dict) -> str:
         f"Needed by: {match['needed_by']}",
         f"Distance: {distance_text}",
         f"Urgency: {match['urgency'].upper()}",
+    ]
+        
+    msg_lines.extend([
         "",
         "Reply YES to accept or NO to decline."
     ])
+    return "\n".join(msg_lines)
 
 
 def _match_detail(patient: Dict, match) -> Dict:
@@ -669,6 +676,9 @@ def _match_detail(patient: Dict, match) -> Dict:
         "needed_by": str(patient.get("next_transfusion_date") or "")[:10],
         "distance_km": match.distance_km,
         "urgency": patient.get("urgency_level", "critical"),
+        "preferred_location_name": patient.get("preferred_location_name"),
+        "preferred_latitude": patient.get("preferred_latitude"),
+        "preferred_longitude": patient.get("preferred_longitude"),
     }
 
 
@@ -701,6 +711,9 @@ def _match_detail_from_request_match(patient: Dict, match: Dict) -> Dict:
         "needed_by": str(patient.get("next_transfusion_date") or "")[:10],
         "distance_km": match.get("distance_km"),
         "urgency": patient.get("urgency_level", "critical"),
+        "preferred_location_name": patient.get("preferred_location_name"),
+        "preferred_latitude": patient.get("preferred_latitude"),
+        "preferred_longitude": patient.get("preferred_longitude"),
     }
 
 
@@ -714,6 +727,9 @@ def _match_detail_from_records(patient: Dict, match: Dict) -> Dict:
         "needed_by": str(patient.get("next_transfusion_date") or "")[:10],
         "distance_km": "nearby",
         "urgency": patient.get("urgency_level", "critical"),
+        "preferred_location_name": patient.get("preferred_location_name"),
+        "preferred_latitude": patient.get("preferred_latitude"),
+        "preferred_longitude": patient.get("preferred_longitude"),
     }
 
 
@@ -896,3 +912,50 @@ async def process_donor_reply(phone: str, body: str):
     else:
         # Unrecognized
         send_whatsapp_message(donor["phone"], "Sorry, I didn't understand that. Please reply YES to accept or NO to decline.")
+
+def notify_donors_of_final_location(patient_id: str, address: str, lat: float, lon: float) -> dict:
+    from database.db import patients_repo, matches_repo, donors_repo, interactions_repo, new_id, now_iso
+    from services.whatsapp_service import send_whatsapp_message
+    
+    patient = patients_repo.get_by_id("patient_id", patient_id)
+    if not patient:
+        return {"status": "error", "message": "Patient not found"}
+        
+    matches = matches_repo.get_all(filters={"patient_id": patient_id, "status": "confirmed"})
+    messages_sent = 0
+    
+    for match in matches:
+        donor = donors_repo.get_by_id("donor_id", match["donor_id"])
+        if donor and donor.get("phone"):
+            donor_name = donor.get("name", "Hero")
+            patient_name = patient.get("name", "Patient")
+            
+            msg_lines = [
+                "[BloodBridge AI - Transfusion Confirmed]",
+                f"Hi {donor_name}, your transfusion for {patient_name} is confirmed!",
+                f"Location: {address}",
+            ]
+            if lat and lon:
+                msg_lines.append(f"🗺️ Maps: https://maps.google.com/?q={lat},{lon}")
+            msg_lines.extend([
+                "",
+                "Please arrive on time. Thank you for saving a life! ❤️"
+            ])
+            
+            msg_body = "\n".join(msg_lines)
+            result = send_whatsapp_message(donor["phone"], msg_body)
+            
+            interactions_repo.put({
+                "interaction_id": f"FINAL-{new_id()}",
+                "donor_id": donor["donor_id"],
+                "patient_id": patient_id,
+                "message": msg_body,
+                "language": "English",
+                "message_type": "final_location",
+                "channel": "WhatsApp",
+                "response_status": result.get("status", "failed"),
+                "timestamp": now_iso(),
+            })
+            messages_sent += 1
+            
+    return {"status": "success", "messages_sent": messages_sent}

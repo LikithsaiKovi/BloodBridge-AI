@@ -7,6 +7,7 @@ from services.forecast_service import compute_forecast
 from services.matching_service import auto_match_patient
 from services.automation_service import request_blood_for_patient
 import logging
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/patients", tags=["patients"])
@@ -216,3 +217,42 @@ def patient_stats():
         stats["blood_groups"][bg] = stats["blood_groups"].get(bg, 0) + 1
 
     return stats
+
+
+class LocationConfirmRequest(BaseModel):
+    address: str
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
+@router.post("/{patient_id}/confirm-location")
+def confirm_location(patient_id: str, request: LocationConfirmRequest):
+    patient = patients_repo.get_by_id("patient_id", patient_id)
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+        
+    patients_repo.update("patient_id", patient_id, {
+        "preferred_location_name": request.address,
+        "preferred_latitude": request.latitude,
+        "preferred_longitude": request.longitude
+    })
+    
+    from services.automation_service import notify_donors_of_final_location
+    res = notify_donors_of_final_location(patient_id, request.address, request.latitude, request.longitude)
+    return res
+
+@router.delete("/{patient_id}")
+def delete_patient(patient_id: str):
+    patient = patients_repo.get_by_id("patient_id", patient_id)
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    # Soft delete
+    patients_repo.update("patient_id", patient_id, {"status": "inactive"})
+    
+    # Also delete associated user record if any
+    from database.db import get_collection
+    users_repo = get_collection("users")
+    user = users_repo.get_by_id("linked_patient_id", patient_id)
+    if user:
+        users_repo.delete("id", user["id"])
+        
+    return {"status": "success", "message": "Patient account removed"}

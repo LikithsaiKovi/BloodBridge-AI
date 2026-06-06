@@ -57,9 +57,16 @@ def list_matches(patient_id: Optional[str] = None, status: Optional[str] = None,
     from database.db import donors_repo, patients_repo
     from services.matching_service import haversine_km
     
+    patient_cache = {}
+    donor_cache = {}
+    
     enriched = []
     for m in matches:
-        donor = donors_repo.get_by_id("donor_id", m["donor_id"])
+        d_id = m["donor_id"]
+        if d_id not in donor_cache:
+            donor_cache[d_id] = donors_repo.get_by_id("donor_id", d_id)
+        donor = donor_cache[d_id]
+        
         if donor:
             m["donor_name"] = donor.get("name")
             m["donor_blood_group"] = donor.get("blood_group")
@@ -67,7 +74,11 @@ def list_matches(patient_id: Optional[str] = None, status: Optional[str] = None,
             m["donor_lat"] = donor.get("latitude")
             m["donor_lng"] = donor.get("longitude")
             
-            patient = patients_repo.get_by_id("patient_id", m["patient_id"])
+            p_id = m["patient_id"]
+            if p_id not in patient_cache:
+                patient_cache[p_id] = patients_repo.get_by_id("patient_id", p_id)
+            patient = patient_cache[p_id]
+            
             if patient and patient.get("latitude") and donor.get("latitude"):
                 dist = haversine_km(
                     patient["latitude"], patient["longitude"],

@@ -204,3 +204,20 @@ def _badge_distribution(donors: list) -> dict:
         badge = d.get("badge", "New Hero")
         dist[badge] = dist.get(badge, 0) + 1
     return dist
+
+
+@router.delete("/{donor_id}")
+def delete_donor(donor_id: str):
+    donor = donors_repo.get_by_id("donor_id", donor_id)
+    if not donor:
+        raise HTTPException(status_code=404, detail="Donor not found")
+    
+    donors_repo.update("donor_id", donor_id, {"status": "inactive"})
+    
+    from database.db import get_collection
+    users_repo = get_collection("users")
+    user = users_repo.get_by_id("linked_donor_id", donor_id)
+    if user:
+        users_repo.delete("id", user["id"])
+        
+    return {"status": "success", "message": "Donor account removed"}

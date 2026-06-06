@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 # ─── Lifespan ─────────────────────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("🚀 BloodBridge AI Backend Starting...")
+    logger.info("BloodBridge AI Backend Starting...")
     logger.info("   Database: SQLite @ %s", settings.db_path)
     logger.info("   AI Mode: %s", "Bedrock" if settings.use_bedrock else "Local")
 
@@ -54,23 +54,23 @@ async def lifespan(app: FastAPI):
     try:
         from ml.predict import load_model
         if load_model():
-            logger.info("✅ XGBoost model loaded")
+            logger.info("[OK] XGBoost model loaded")
         else:
-            logger.warning("⚠️  No ML model found. Using heuristic predictor. Run: python -m ml.train_model")
+            logger.warning("[WARN] No ML model found. Using heuristic predictor. Run: python -m ml.train_model")
     except Exception as e:
-        logger.warning("⚠️  ML model load failed: %s", e)
+        logger.warning("[WARN] ML model load failed: %s", e)
 
     # Start Background Automation Scheduler (runs outreach automation every hour)
     import threading
     import time
     def scheduler_loop():
-        logger.info("⏰ Background Automation Scheduler Thread Started (1-hour interval)")
+        logger.info("[CLOCK] Background Automation Scheduler Thread Started (1-hour interval)")
         from services.automation_service import run_outreach_automation
         # Sleep for 1 minute initially to let the server start up completely
         time.sleep(60)
         while True:
             try:
-                logger.info("⏰ Running scheduled outreach automation...")
+                logger.info("[CLOCK] Running scheduled outreach automation...")
                 run_outreach_automation()
             except Exception as e:
                 logger.error("Error in scheduled automation loop: %s", e)
@@ -82,10 +82,10 @@ async def lifespan(app: FastAPI):
         scheduler_thread = threading.Thread(target=scheduler_loop, daemon=True)
         scheduler_thread.start()
     else:
-        logger.info("⏸️  DEBUG mode active: Background Automation Scheduler is DISABLED to save Twilio limits.")
+        logger.info("[PAUSED] DEBUG mode active: Background Automation Scheduler is DISABLED to save Twilio limits.")
 
-    logger.info("✅ BloodBridge AI Backend ready at http://localhost:8000")
-    logger.info("📚 API Docs: http://localhost:8000/docs")
+    logger.info("[OK] BloodBridge AI Backend ready at http://localhost:8000")
+    logger.info("[DOCS] API Docs: http://localhost:8000/docs")
 
     yield
 

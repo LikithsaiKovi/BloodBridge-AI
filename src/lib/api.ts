@@ -215,6 +215,11 @@ export const patientsApi = {
   forecast: (id: string) => request<any>('GET', `/api/patients/${id}/forecast`),
 
   stats: () => request<any>('GET', '/api/patients/stats/summary'),
+  
+  confirmLocation: (id: string, data: { address: string; latitude?: number; longitude?: number }) => 
+    request<any>('POST', `/api/patients/${id}/confirm-location`, data),
+    
+  delete: (id: string) => request<any>('DELETE', `/api/patients/${id}`),
 };
 
 // ─── Donor API ────────────────────────────────────────────────────────────────
@@ -235,6 +240,8 @@ export const donorsApi = {
   heatmap: () => request<any[]>('GET', '/api/donors/heatmap'),
 
   stats: () => request<any>('GET', '/api/donors/stats/summary'),
+  
+  delete: (id: string) => request<any>('DELETE', `/api/donors/${id}`),
 };
 
 // ─── Matching API ─────────────────────────────────────────────────────────────

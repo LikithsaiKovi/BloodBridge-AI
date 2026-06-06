@@ -421,6 +421,10 @@ export default function AuthPage() {
   const [regPassword,    setRegPassword   ] = useState('');
   const [regPhone,       setRegPhone      ] = useState('');
   const [regCity,        setRegCity       ] = useState('');
+  const [regPreferredLoc, setRegPreferredLoc] = useState('');
+  const [currentLat,     setCurrentLat    ] = useState<number | undefined>();
+  const [currentLon,     setCurrentLon    ] = useState<number | undefined>();
+  const [locationStatus, setLocationStatus] = useState('');
   const [regBloodGroup,  setRegBloodGroup ] = useState('');
   const [regLastDonate,  setRegLastDonate ] = useState('');
   const [regFrequency,   setRegFrequency  ] = useState('');
@@ -482,6 +486,9 @@ export default function AuthPage() {
         role:     selectedRole,
         phone:    regPhone   || undefined,
         city:     regCity    || undefined,
+        latitude: currentLat,
+        longitude: currentLon,
+        preferred_location_name: regPreferredLoc || undefined,
       };
 
       if (selectedRole === 'donor') {
@@ -851,6 +858,33 @@ export default function AuthPage() {
                             icon={MapPin}
                           />
                         </div>
+                        <InputField
+                          label="Preferred Location (Exact Address)"
+                          placeholder="e.g. Apollo Hospital, Jubilee Hills"
+                          value={regPreferredLoc}
+                          onChange={setRegPreferredLoc}
+                          icon={MapPin}
+                        />
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLocationStatus('Fetching...');
+                              navigator.geolocation.getCurrentPosition(
+                                (pos) => {
+                                  setCurrentLat(pos.coords.latitude);
+                                  setCurrentLon(pos.coords.longitude);
+                                  setLocationStatus('📍 Location Saved');
+                                },
+                                () => setLocationStatus('❌ Location Denied')
+                              );
+                            }}
+                            className="py-2.5 px-4 text-xs font-semibold rounded-xl border border-gray-200 bg-gray-50 hover:bg-[#D90429]/5 hover:text-[#D90429] hover:border-[#D90429]/30 transition-colors"
+                          >
+                            Get Current GPS Location
+                          </button>
+                          {locationStatus && <span className="text-xs text-gray-500 font-medium">{locationStatus}</span>}
+                        </div>
 
                         {/* Donor-specific */}
                         {selectedRole === 'donor' && (
@@ -903,8 +937,8 @@ export default function AuthPage() {
                                   icon={Activity}
                                 />
                                 <InputField
-                                  label="Hospital Name"
-                                  placeholder="City General Hospital"
+                                  label="Full Hospital Address"
+                                  placeholder="City General Hospital, 123 Main St, City, Zip"
                                   value={regHospital}
                                   onChange={setRegHospital}
                                   icon={Shield}
