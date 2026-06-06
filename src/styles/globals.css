@@ -1,0 +1,130 @@
+/* ─── BloodBridge AI Global Styles ────────────────────────────────────────── */
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Base body */
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #f8f9fa;
+  color: #111827;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Remove number input arrows */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* Page transition */
+.page-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms ease, transform 300ms ease;
+}
+
+/* Responsive content area helpers */
+.content-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+@media (min-width: 640px) {
+  .content-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .content-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* Card hover lift */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+}
+
+/* Blood group colors */
+.blood-Opos  { background: linear-gradient(135deg, #D90429, #EF233C); }
+.blood-Oneg  { background: linear-gradient(135deg, #7b0e14, #D90429); }
+.blood-Apos  { background: linear-gradient(135deg, #1d4ed8, #3b82f6); }
+.blood-Aneg  { background: linear-gradient(135deg, #1e40af, #1d4ed8); }
+.blood-Bpos  { background: linear-gradient(135deg, #059669, #10b981); }
+.blood-Bneg  { background: linear-gradient(135deg, #065f46, #059669); }
+.blood-ABpos { background: linear-gradient(135deg, #7c3aed, #8b5cf6); }
+.blood-ABneg { background: linear-gradient(135deg, #5b21b6, #7c3aed); }
+
+/* Pulse animation for critical alerts */
+@keyframes critical-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(217, 4, 41, 0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(217, 4, 41, 0); }
+}
+.critical-pulse {
+  animation: critical-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Glass card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Auth page background pattern */
+.auth-bg-dots {
+  background-image: radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Floating animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33%  { transform: translateY(-12px) rotate(5deg); }
+  66%  { transform: translateY(-6px) rotate(-3deg); }
+}
+.animate-float { animation: float 6s ease-in-out infinite; }
+.animate-float-delay { animation: float 6s ease-in-out 2s infinite; }
+.animate-float-slow  { animation: float 8s ease-in-out 1s infinite; }
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #D90429, #EF233C);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.gradient-text-blue {
+  background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Responsive table */
+@media (max-width: 640px) {
+  .responsive-table-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .responsive-table-card table { display: none; }
+  .responsive-table-card .mobile-card { display: flex; }
+}
