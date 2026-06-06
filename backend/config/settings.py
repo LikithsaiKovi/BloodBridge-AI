@@ -18,7 +18,7 @@ class Settings(BaseSettings):
 
     # DynamoDB (AWS)
     aws_region: str = "ap-south-1"
-    dynamodb_endpoint: Optional[str] = "http://localhost:8001"
+    dynamodb_endpoint: Optional[str] = None
     aws_access_key_id: str = "local"
     aws_secret_access_key: str = "local"
 
