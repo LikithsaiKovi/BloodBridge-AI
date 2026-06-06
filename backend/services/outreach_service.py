@@ -250,7 +250,12 @@ def _generate_with_bedrock(
         import boto3
         import json
 
-        client = boto3.client("bedrock-runtime", region_name=settings.aws_region)
+        kwargs = {"region_name": settings.aws_region}
+        if settings.aws_access_key_id and settings.aws_access_key_id != "local":
+            kwargs["aws_access_key_id"] = settings.aws_access_key_id
+            kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
+            
+        client = boto3.client("bedrock-runtime", **kwargs)
 
         prompt = (
             f"You are a compassionate blood donation coordinator. Generate a {message_type} message in {language} "

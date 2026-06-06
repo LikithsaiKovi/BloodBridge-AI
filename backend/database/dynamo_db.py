@@ -22,16 +22,19 @@ TABLE_PKS = {
 
 def get_dynamodb_resource():
     # Helper to get DynamoDB resource
+    kwargs = {
+        "region_name": settings.aws_region,
+    }
+    
+    # Only pass keys if they aren't the dummy "local" default
+    if settings.aws_access_key_id and settings.aws_access_key_id != "local":
+        kwargs["aws_access_key_id"] = settings.aws_access_key_id
+        kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
+
     if settings.dynamodb_endpoint and "localhost" in settings.dynamodb_endpoint:
-        return boto3.resource(
-            "dynamodb",
-            endpoint_url=settings.dynamodb_endpoint,
-            region_name=settings.aws_region,
-            aws_access_key_id=settings.aws_access_key_id,
-            aws_secret_access_key=settings.aws_secret_access_key
-        )
-    else:
-        return boto3.resource("dynamodb", region_name=settings.aws_region)
+        kwargs["endpoint_url"] = settings.dynamodb_endpoint
+
+    return boto3.resource("dynamodb", **kwargs)
 
 def init_dynamodb():
     """Create tables if they don't exist"""
