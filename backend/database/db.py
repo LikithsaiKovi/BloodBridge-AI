@@ -294,12 +294,17 @@ class Repository:
 
 # ─── Table-specific Repositories ──────────────────────────────────────────────
 
-patients_repo = Repository("patients")
-donors_repo = Repository("donors")
-matches_repo = Repository("matches")
-predictions_repo = Repository("predictions")
-interactions_repo = Repository("interactions")
-schedules_repo = Repository("schedules")
-users_repo = Repository("users")
-reset_tokens_repo = Repository("password_reset_tokens")
-settings_repo = Repository("system_settings")
+if settings.use_dynamodb:
+    from database.dynamo_db import DynamoRepository as Repo
+else:
+    Repo = Repository
+
+patients_repo = Repo("patients")
+donors_repo = Repo("donors")
+matches_repo = Repo("matches")
+predictions_repo = Repo("predictions")
+interactions_repo = Repo("interactions")
+schedules_repo = Repo("schedules")
+users_repo = Repo("users")
+reset_tokens_repo = Repo("password_reset_tokens")
+settings_repo = Repo("system_settings")

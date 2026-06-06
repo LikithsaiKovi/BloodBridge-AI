@@ -45,10 +45,15 @@ async def lifespan(app: FastAPI):
     logger.info("   AI Mode: %s", "Bedrock" if settings.use_bedrock else "Local")
 
     # Initialize DB
-    init_db()
+    if settings.use_dynamodb:
+        from database.dynamo_db import init_dynamodb
+        init_dynamodb()
+    else:
+        init_db()
 
-    # Seed data if empty
-    seed_all()
+    # Seed data if empty (SQLite only for now, migration script handles Dynamo)
+    if not settings.use_dynamodb:
+        seed_all()
 
     # Try loading ML model
     try:
