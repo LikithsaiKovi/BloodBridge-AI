@@ -520,309 +520,309 @@ export default function PatientManagement() {
   const selectCls = 'border border-gray-200 rounded-xl px-3 h-10 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer';
 
   return (
-    <div className="min-h-screen p-6 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <ErrorBoundary>
+      <div className="min-h-screen p-6 md:p-8">
+        <div className="max-w-7xl mx-auto space-y-6">
 
-        {/* ── Live WhatsApp Alert Banner ────────────────────────────────────── */}
-        <AnimatePresence>
-          {liveAlert && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="fixed top-4 left-1/2 -translate-x-1/2 z-[9998] px-6 py-3 rounded-2xl shadow-2xl bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm font-semibold flex items-center gap-3"
-            >
-              <RefreshCw className="w-4 h-4 animate-spin" />
-              {liveAlert}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── Toast Notifications ──────────────────────────────────────────── */}
-        <div className="fixed top-4 right-4 z-[9999] space-y-2 pointer-events-none">
+          {/* ── Live WhatsApp Alert Banner ────────────────────────────────────── */}
           <AnimatePresence>
-            {toasts.map(toast => (
+            {liveAlert && (
               <motion.div
-                key={toast.id}
-                initial={{ opacity: 0, x: 60, scale: 0.95 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: 60, scale: 0.95 }}
-                className={`pointer-events-auto px-4 py-3 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2 ${
-                  toast.type === 'success'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-red-600 text-white'
-                }`}
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="fixed top-4 left-1/2 -translate-x-1/2 z-[9998] px-6 py-3 rounded-2xl shadow-2xl bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm font-semibold flex items-center gap-3"
               >
-                {toast.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
-                {toast.msg}
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                {liveAlert}
               </motion.div>
-            ))}
+            )}
           </AnimatePresence>
-        </div>
 
-        {/* ── Header ──────────────────────────────────────────────────────── */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 p-8 text-white shadow-2xl">
-          <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-56 h-56 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="relative z-10 flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-xl flex items-center justify-center">
-                  <Heart className="w-7 h-7" />
-                </div>
-                <Badge className="bg-white/20 text-white border-0 backdrop-blur-xl">
-                  Thalassemia Registry
-                </Badge>
-              </div>
-              <h1 className="text-4xl font-semibold mb-2">Patient Management</h1>
-              <p className="text-white/85 text-lg max-w-2xl">
-                Thalassemia patient registry and transfusion scheduling
-              </p>
-            </div>
-            <Button
-              onClick={() => setShowAddForm(v => !v)}
-              className="bg-white text-blue-700 hover:bg-blue-50 font-semibold shadow-lg border-0"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Patient
-            </Button>
+          {/* ── Toast Notifications ──────────────────────────────────────────── */}
+          <div className="fixed top-4 right-4 z-[9999] space-y-2 pointer-events-none">
+            <AnimatePresence>
+              {toasts.map(toast => (
+                <motion.div
+                  key={toast.id}
+                  initial={{ opacity: 0, x: 60, scale: 0.95 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: 60, scale: 0.95 }}
+                  className={`pointer-events-auto px-4 py-3 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2 ${
+                    toast.type === 'success'
+                      ? 'bg-green-600 text-white'
+                      : 'bg-red-600 text-white'
+                  }`}
+                >
+                  {toast.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                  {toast.msg}
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
-        </div>
 
-        {/* ── KPI Row ──────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {kpiData.map((kpi, i) => (
-            <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
-              <Card className="border-0 shadow-lg shadow-gray-200/50 hover:shadow-xl transition-all duration-300 overflow-hidden relative group">
-                <div className={`absolute inset-0 bg-gradient-to-br ${kpi.color} opacity-0 group-hover:opacity-5 transition-opacity`} />
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className={`w-11 h-11 rounded-xl ${kpi.bg} flex items-center justify-center`}>
-                      <kpi.icon className={`w-5 h-5 ${kpi.text}`} />
-                    </div>
-                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${kpi.color} flex items-center justify-center shadow-lg`}>
-                      <kpi.icon className="w-5 h-5 text-white" />
-                    </div>
+          {/* ── Header ──────────────────────────────────────────────────────── */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 p-8 text-white shadow-2xl">
+            <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-56 h-56 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="relative z-10 flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-xl flex items-center justify-center">
+                    <Heart className="w-7 h-7" />
                   </div>
-                  {loading ? (
-                    <>
-                      <Skeleton className="h-8 w-16 mb-1" />
-                      <Skeleton className="h-3 w-24" />
-                    </>
-                  ) : (
-                    <>
-                      <div className="text-3xl font-semibold text-gray-900 mb-0.5">{kpi.value}</div>
-                      <div className="text-sm text-gray-500">{kpi.label}</div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* ── Add Patient Form ─────────────────────────────────────────────── */}
-        <AnimatePresence>
-          {showAddForm && (
-            <AddPatientForm onSuccess={handleAdded} onCancel={() => setShowAddForm(false)} />
-          )}
-        </AnimatePresence>
-
-        {/* ── Search & Filter Bar ──────────────────────────────────────────── */}
-        <Card className="border-0 shadow-lg shadow-gray-200/50">
-          <CardContent className="p-5">
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Search */}
-              <div className="flex-1 min-w-48 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  placeholder="Search by name, blood group or city…"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className="pl-9 h-10 border-gray-200"
-                />
+                  <Badge className="bg-white/20 text-white border-0 backdrop-blur-xl">
+                    Thalassemia Registry
+                  </Badge>
+                </div>
+                <h1 className="text-4xl font-semibold mb-2">Patient Management</h1>
+                <p className="text-white/85 text-lg max-w-2xl">
+                  Thalassemia patient registry and transfusion scheduling
+                </p>
               </div>
-
-              {/* Blood Group Filter */}
-              <select
-                className={selectCls}
-                value={filterBlood}
-                onChange={e => setFilterBlood(e.target.value)}
+              <Button
+                onClick={() => setShowAddForm(v => !v)}
+                className="bg-white text-blue-700 hover:bg-blue-50 font-semibold shadow-lg border-0"
               >
-                <option value="">All Blood Groups</option>
-                {BLOOD_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
-              </select>
-
-              {/* Urgency Filter */}
-              <select
-                className={selectCls}
-                value={filterUrgency}
-                onChange={e => setFilterUrgency(e.target.value)}
-              >
-                <option value="">All Urgency</option>
-                {URGENCY_LEVELS.map(u => (
-                  <option key={u} value={u}>{u.charAt(0).toUpperCase() + u.slice(1)}</option>
-                ))}
-              </select>
-
-              {/* Results count */}
-              <Badge variant="secondary" className="bg-gray-100 text-gray-700 border-0 ml-auto">
-                {filtered.length} patients
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ── Patient List ─────────────────────────────────────────────────── */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">Patient Registry</h2>
-              <p className="text-sm text-gray-500">Sorted by urgency level</p>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Patient
+              </Button>
             </div>
           </div>
 
-          {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3, 4].map(n => (
-                <Card key={n} className="border-0 shadow-lg shadow-gray-200/50">
+          {/* ── KPI Row ──────────────────────────────────────────────────────── */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {kpiData.map((kpi, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
+                <Card className="border-0 shadow-lg shadow-gray-200/50 hover:shadow-xl transition-all duration-300 overflow-hidden relative group">
+                  <div className={`absolute inset-0 bg-gradient-to-br ${kpi.color} opacity-0 group-hover:opacity-5 transition-opacity`} />
                   <CardContent className="p-5">
-                    <div className="flex items-center gap-4">
-                      <Skeleton className="w-14 h-14 rounded-xl" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-5 w-40" />
-                        <Skeleton className="h-3 w-64" />
+                    <div className="flex items-start justify-between mb-3">
+                      <div className={`w-11 h-11 rounded-xl ${kpi.bg} flex items-center justify-center`}>
+                        <kpi.icon className={`w-5 h-5 ${kpi.text}`} />
                       </div>
-                      <Skeleton className="h-9 w-28 rounded-xl" />
+                      <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${kpi.color} flex items-center justify-center shadow-lg`}>
+                        <kpi.icon className="w-5 h-5 text-white" />
+                      </div>
                     </div>
+                    {loading ? (
+                      <>
+                        <Skeleton className="h-8 w-16 mb-1" />
+                        <Skeleton className="h-3 w-24" />
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-3xl font-semibold text-gray-900 mb-0.5">{kpi.value}</div>
+                        <div className="text-sm text-gray-500">{kpi.label}</div>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
-              ))}
+              </motion.div>
+            ))}
+          </div>
+
+          {/* ── Add Patient Form ─────────────────────────────────────────────── */}
+          <AnimatePresence>
+            {showAddForm && (
+              <AddPatientForm onSuccess={handleAdded} onCancel={() => setShowAddForm(false)} />
+            )}
+          </AnimatePresence>
+
+          {/* ── Search & Filter Bar ──────────────────────────────────────────── */}
+          <Card className="border-0 shadow-lg shadow-gray-200/50">
+            <CardContent className="p-5">
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Search */}
+                <div className="flex-1 min-w-48 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Search by name, blood group or city…"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="pl-9 h-10 border-gray-200"
+                  />
+                </div>
+
+                {/* Blood Group Filter */}
+                <select
+                  className={selectCls}
+                  value={filterBlood}
+                  onChange={e => setFilterBlood(e.target.value)}
+                >
+                  <option value="">All Blood Groups</option>
+                  {BLOOD_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
+                </select>
+
+                {/* Urgency Filter */}
+                <select
+                  className={selectCls}
+                  value={filterUrgency}
+                  onChange={e => setFilterUrgency(e.target.value)}
+                >
+                  <option value="">All Urgency</option>
+                  {URGENCY_LEVELS.map(u => (
+                    <option key={u} value={u}>{u.charAt(0).toUpperCase() + u.slice(1)}</option>
+                  ))}
+                </select>
+
+                {/* Results count */}
+                <Badge variant="secondary" className="bg-gray-100 text-gray-700 border-0 ml-auto">
+                  {filtered.length} patients
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ── Patient List ─────────────────────────────────────────────────── */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Patient Registry</h2>
+                <p className="text-sm text-gray-500">Sorted by urgency level</p>
+              </div>
             </div>
-          ) : filtered.length === 0 ? (
-            <Card className="border-0 shadow-lg shadow-gray-200/50">
-              <CardContent className="p-12 text-center">
-                <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="text-gray-500">No patients found.</p>
-                {search || filterBlood || filterUrgency ? (
-                  <Button variant="link" className="mt-2 text-blue-600" onClick={() => { setSearch(''); setFilterBlood(''); setFilterUrgency(''); }}>
-                    Clear filters
-                  </Button>
-                ) : null}
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              <AnimatePresence initial={false}>
-                {filtered.map((patient, i) => {
-                  const sty = URGENCY_STYLE[patient.urgency_level] ?? URGENCY_STYLE.low;
-                  const gradient = BLOOD_GROUP_COLORS[patient.blood_group] ?? 'from-gray-400 to-gray-500';
 
+            {loading ? (
+              <div className="space-y-3">
+                {[1, 2, 3, 4].map(n => (
+                  <Card key={n} className="border-0 shadow-lg shadow-gray-200/50">
+                    <CardContent className="p-5">
+                      <div className="flex items-center gap-4">
+                        <Skeleton className="w-14 h-14 rounded-xl" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-5 w-40" />
+                          <Skeleton className="h-3 w-64" />
+                        </div>
+                        <Skeleton className="h-9 w-28 rounded-xl" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : filtered.length === 0 ? (
+              <Card className="border-0 shadow-lg shadow-gray-200/50">
+                <CardContent className="p-12 text-center">
+                  <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p className="text-gray-500">No patients found.</p>
+                  {search || filterBlood || filterUrgency ? (
+                    <Button variant="link" className="mt-2 text-blue-600" onClick={() => { setSearch(''); setFilterBlood(''); setFilterUrgency(''); }}>
+                      Clear filters
+                    </Button>
+                  ) : null}
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                <AnimatePresence initial={false}>
+                  {filtered.map((patient, i) => {
+                    const sty = URGENCY_STYLE[patient.urgency_level] ?? URGENCY_STYLE.low;
+                    const gradient = BLOOD_GROUP_COLORS[patient.blood_group] ?? 'from-gray-400 to-gray-500';
+
+                    return (
+                      <motion.div
+                        key={patient.patient_id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ delay: Math.min(i * 0.04, 0.3) }}
+                      >
+                        <Card className={`border-0 shadow-md shadow-gray-200/40 hover:shadow-lg transition-all duration-300 border-l-4 ${sty.border} overflow-hidden`}>
+                          <CardContent className="p-5">
+                            <div className="flex items-center gap-4">
+                              {/* Blood Group Badge */}
+                              <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-md flex-shrink-0`}>
+                                <span className="text-white font-bold text-sm">{patient.blood_group}</span>
+                              </div>
+
+                              {/* Main Info */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                  <h3 className="font-semibold text-gray-900">{patient.name}</h3>
+                                  <span className="text-xs text-gray-400">P-{patient.patient_id.slice(-4)}</span>
+                                  <Badge className={`text-xs ${sty.badge}`}>{patient.urgency_level}</Badge>
+                                </div>
+                                <div className="flex items-center gap-3 text-sm text-gray-500 flex-wrap">
+                                  <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{patient.city}</span>
+                                  {patient.hospital && <span className="flex items-center gap-1"><Hospital className="w-3.5 h-3.5" />{patient.hospital}</span>}
+                                  <span className="flex items-center gap-1"><Droplet className="w-3.5 h-3.5" />{patient.units_needed} units</span>
+                                </div>
+                              </div>
+
+                              {/* Countdown */}
+                              <div className="text-center flex-shrink-0 px-3">
+                                <div className="text-xs text-gray-400 mb-0.5">Transfusion</div>
+                                <DaysBadge dateStr={patient.next_transfusion_date} />
+                              </div>
+
+                              {/* Actions */}
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <Button
+                                  size="sm"
+                                  className="bg-gradient-to-r from-[#D90429] to-[#EF233C] hover:from-[#c0021f] hover:to-[#d4162e] text-white border-0 text-xs shadow-md shadow-red-200"
+                                  onClick={() => handleFindDonors(patient.patient_id)}
+                                  disabled={matchingId === patient.patient_id}
+                                >
+                                  {matchingId === patient.patient_id ? (
+                                    <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                                  ) : (
+                                    <Phone className="w-3 h-3 mr-1" />
+                                  )}
+                                  Message Donors
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs border-gray-200"
+                                  onClick={() => setSelectedPatient(patient)}
+                                >
+                                  <ChevronRight className="w-3 h-3 mr-1" />
+                                  View
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
+              </div>
+            )}
+          </div>
+
+          {/* ── Legend ───────────────────────────────────────────────────────── */}
+          <Card className="border-0 shadow-md shadow-gray-100/50 bg-gray-50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-6 flex-wrap">
+                <span className="text-xs font-medium text-gray-500">Urgency Legend:</span>
+                {URGENCY_LEVELS.map(u => {
+                  const s = URGENCY_STYLE[u];
                   return (
-                    <motion.div
-                      key={patient.patient_id}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      transition={{ delay: Math.min(i * 0.04, 0.3) }}
-                    >
-                      <Card className={`border-0 shadow-md shadow-gray-200/40 hover:shadow-lg transition-all duration-300 border-l-4 ${sty.border} overflow-hidden`}>
-                        <CardContent className="p-5">
-                          <div className="flex items-center gap-4">
-                            {/* Blood Group Badge */}
-                            <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-md flex-shrink-0`}>
-                              <span className="text-white font-bold text-sm">{patient.blood_group}</span>
-                            </div>
-
-                            {/* Main Info */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                <h3 className="font-semibold text-gray-900">{patient.name}</h3>
-                                <span className="text-xs text-gray-400">P-{patient.patient_id.slice(-4)}</span>
-                                <Badge className={`text-xs ${sty.badge}`}>{patient.urgency_level}</Badge>
-                              </div>
-                              <div className="flex items-center gap-3 text-sm text-gray-500 flex-wrap">
-                                <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{patient.city}</span>
-                                {patient.hospital && <span className="flex items-center gap-1"><Hospital className="w-3.5 h-3.5" />{patient.hospital}</span>}
-                                <span className="flex items-center gap-1"><Droplet className="w-3.5 h-3.5" />{patient.units_needed} units</span>
-                              </div>
-                            </div>
-
-                            {/* Countdown */}
-                            <div className="text-center flex-shrink-0 px-3">
-                              <div className="text-xs text-gray-400 mb-0.5">Transfusion</div>
-                              <DaysBadge dateStr={patient.next_transfusion_date} />
-                            </div>
-
-                            {/* Actions */}
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              <Button
-                                size="sm"
-                                className="bg-gradient-to-r from-[#D90429] to-[#EF233C] hover:from-[#c0021f] hover:to-[#d4162e] text-white border-0 text-xs shadow-md shadow-red-200"
-                                onClick={() => handleFindDonors(patient.patient_id)}
-                                disabled={matchingId === patient.patient_id}
-                              >
-                                {matchingId === patient.patient_id ? (
-                                  <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                                ) : (
-                                  <Phone className="w-3 h-3 mr-1" />
-                                )}
-                                Message Donors
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-xs border-gray-200"
-                                onClick={() => setSelectedPatient(patient)}
-                              >
-                                <ChevronRight className="w-3 h-3 mr-1" />
-                                View
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
+                    <div key={u} className="flex items-center gap-1.5">
+                      <span>{s.icon}</span>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${s.badge}`}>{u}</span>
+                    </div>
                   );
                 })}
-              </AnimatePresence>
-            </div>
-          )}
+              </div>
+            </CardContent>
+          </Card>
+
         </div>
 
-        {/* ── Legend ───────────────────────────────────────────────────────── */}
-        <Card className="border-0 shadow-md shadow-gray-100/50 bg-gray-50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-6 flex-wrap">
-              <span className="text-xs font-medium text-gray-500">Urgency Legend:</span>
-              {URGENCY_LEVELS.map(u => {
-                const s = URGENCY_STYLE[u];
-                return (
-                  <div key={u} className="flex items-center gap-1.5">
-                    <span>{s.icon}</span>
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${s.badge}`}>{u}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-      </div>
-
-      {/* ── Patient Detail Panel ─────────────────────────────────────────────── */}
-      <AnimatePresence>
-        {selectedPatient && (
-          <ErrorBoundary>
+        {/* ── Patient Detail Panel ─────────────────────────────────────────────── */}
+        <AnimatePresence>
+          {selectedPatient && (
             <PatientDetailPanel
               patient={selectedPatient}
               onClose={() => setSelectedPatient(null)}
               onFindDonors={handleFindDonors}
               matchingId={matchingId}
             />
-          </ErrorBoundary>
-        )}
-      </AnimatePresence>
-    </div>
+          )}
+        </AnimatePresence>
+      </div>
+    </ErrorBoundary>
   );
 }
