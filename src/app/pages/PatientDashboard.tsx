@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/auth';
 import { patientsApi, matchesApi, forecastsApi, Patient, MatchResult } from '../../lib/api';
-import { Calendar, Clock, Droplet, AlertTriangle, CheckCircle, Heart, Users, Phone, MapPin, TrendingUp, Bell, Activity, Shield } from 'lucide-react';
+import { Calendar, Clock, Droplet, AlertTriangle, CheckCircle, Heart, Users, Phone, MapPin, TrendingUp, Bell, Activity, Shield, Edit, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -19,6 +19,16 @@ export default function PatientDashboard() {
   const [requestSuccess, setRequestSuccess] = useState('');
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [transfusionDate, setTransfusionDate] = useState('');
+  
+  // Edit Profile State
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [editForm, setEditForm] = useState({
+    next_transfusion_date: '',
+    city: '',
+    hospital: '',
+    units_needed: 2,
+  });
 
   const patientId = user?.linked_patient_id;
   const [profile, setProfile] = useState<any>(null);
@@ -149,6 +159,30 @@ export default function PatientDashboard() {
     }
   };
 
+  const handleOpenEditModal = () => {
+    setEditForm({
+      next_transfusion_date: profile.next_transfusion_date?.split('T')[0] || '',
+      city: profile.city || '',
+      hospital: profile.hospital || '',
+      units_needed: profile.units_needed || 2,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleSaveProfile = async () => {
+    setSavingProfile(true);
+    try {
+      await patientsApi.update(patientId!, editForm);
+      setProfile({ ...profile, ...editForm });
+      setShowEditModal(false);
+    } catch (err) {
+      console.error("Failed to save profile", err);
+      alert("Failed to save changes. Please try again.");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   return (
     <div className="min-h-screen p-4 md:p-8 space-y-6 max-w-7xl mx-auto pb-24 lg:pb-8">
       
@@ -180,8 +214,16 @@ export default function PatientDashboard() {
                 </span>
               </div>
             </div>
-            {/* Delete Account Button */}
-            <div className="absolute top-0 right-0 p-4">
+            {/* Action Buttons */}
+            <div className="absolute top-0 right-0 p-4 flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleOpenEditModal}
+                className="bg-white/10 text-white hover:bg-white/20 border-white/30 hidden sm:flex"
+              >
+                <Edit className="w-4 h-4 mr-2" /> Edit Profile
+              </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -190,6 +232,18 @@ export default function PatientDashboard() {
                 className="bg-red-500/10 text-red-100 hover:bg-red-500/20 border-red-500/30"
               >
                 {deletingAccount ? 'Deleting...' : 'Delete Account'}
+              </Button>
+            </div>
+            
+            {/* Mobile Edit Button */}
+            <div className="sm:hidden absolute top-14 right-4 mt-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleOpenEditModal}
+                className="bg-white/10 text-white hover:bg-white/20 border-white/30"
+              >
+                <Edit className="w-4 h-4 mr-2" /> Edit
               </Button>
             </div>
           </div>
@@ -534,6 +588,92 @@ export default function PatientDashboard() {
                     onClick={submitBloodRequest}
                   >
                     Confirm & Request
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Profile Modal */}
+      <AnimatePresence>
+        {showEditModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl my-8"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Edit Profile</h3>
+                  <p className="text-sm text-gray-500">Update your transfusion details</p>
+                </div>
+                <button 
+                  onClick={() => setShowEditModal(false)}
+                  className="p-2 text-gray-400 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Next Transfusion Date</label>
+                  <input 
+                    type="date" 
+                    value={editForm.next_transfusion_date}
+                    onChange={(e) => setEditForm({...editForm, next_transfusion_date: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                  <input 
+                    type="text" 
+                    value={editForm.city}
+                    onChange={(e) => setEditForm({...editForm, city: e.target.value})}
+                    placeholder="Enter your city"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Hospital / Clinic</label>
+                  <input 
+                    type="text" 
+                    value={editForm.hospital}
+                    onChange={(e) => setEditForm({...editForm, hospital: e.target.value})}
+                    placeholder="E.g., Apollo Hospitals"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Units Needed</label>
+                  <input 
+                    type="number" 
+                    min="1"
+                    value={editForm.units_needed}
+                    onChange={(e) => setEditForm({...editForm, units_needed: parseInt(e.target.value) || 1})}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => setShowEditModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={handleSaveProfile}
+                    disabled={savingProfile}
+                  >
+                    {savingProfile ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </div>
               </div>
