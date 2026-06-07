@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     # AI
     use_bedrock: bool = False
     bedrock_region: str = "us-east-1"
-    bedrock_model_id: str = "arn:aws:bedrock:us-east-1:782028083305:inference-profile/us.anthropic.claude-opus-4-1-20250805-v1:0"
+    bedrock_model_id: str = "arn:aws:bedrock:us-east-1:782028083305:inference-profile/us.anthropic.claude-opus-4-6-v1"
 
     # ML
     model_path: str = "./ml/models/donor_model.pkl"
