@@ -71,16 +71,16 @@ async def lifespan(app: FastAPI):
     def scheduler_loop():
         logger.info("[CLOCK] Background Automation Scheduler Thread Started (1-hour interval)")
         from services.automation_service import run_outreach_automation
-        # Sleep for 1 minute initially to let the server start up completely
-        time.sleep(60)
+        # Sleep for 10 seconds initially to let the server start up completely
+        time.sleep(10)
         while True:
             try:
                 logger.info("[CLOCK] Running scheduled outreach automation...")
                 run_outreach_automation()
             except Exception as e:
                 logger.error("Error in scheduled automation loop: %s", e)
-            # Sleep for 1 hour
-            time.sleep(3600)
+            # Sleep for 1 minute to test the 5-minute cascading escalation
+            time.sleep(60)
 
     # Prevent development server restarts from draining Twilio SMS limits
     if not settings.debug:

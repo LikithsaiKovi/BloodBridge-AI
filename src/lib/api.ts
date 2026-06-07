@@ -209,8 +209,8 @@ export const patientsApi = {
   update: (id: string, data: Partial<Patient>) =>
     request<Patient>('PUT', `/api/patients/${id}`, data),
 
-  requestBlood: (id: string, params?: { top_n?: number; max_distance_km?: number }) =>
-    request<BloodRequestResult>('POST', `/api/patients/${id}/request-blood`, undefined, params as any),
+  requestBlood: (id: string, data?: { top_n?: number; max_distance_km?: number; date_of_transfusion?: string }) =>
+    request<BloodRequestResult>('POST', `/api/patients/${id}/request-blood`, data),
 
   forecast: (id: string) => request<any>('GET', `/api/patients/${id}/forecast`),
 

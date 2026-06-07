@@ -74,11 +74,20 @@ def get_patient(patient_id: str):
     return patient
 
 
+class RequestBloodPayload(BaseModel):
+    top_n: int = 3
+    max_distance_km: float = 200.0
+    date_of_transfusion: Optional[str] = None
+
 @router.post("/{patient_id}/request-blood", response_model=dict)
-def request_blood(patient_id: str, top_n: int = 3, max_distance_km: float = 200.0):
+def request_blood(patient_id: str, payload: RequestBloodPayload):
     """One-click request: match same-blood-group donors and send WhatsApp alerts."""
     try:
-        return request_blood_for_patient(patient_id, top_n=top_n, max_distance_km=max_distance_km)
+        if payload.date_of_transfusion:
+            # Update the patient's record with the new transfusion date
+            patients_repo.update("patient_id", patient_id, {"next_transfusion_date": payload.date_of_transfusion})
+            
+        return request_blood_for_patient(patient_id, top_n=payload.top_n, max_distance_km=payload.max_distance_km)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
     except Exception as exc:

@@ -17,6 +17,8 @@ export default function PatientDashboard() {
   const [loadingMatches, setLoadingMatches] = useState(true);
   const [requesting, setRequesting] = useState(false);
   const [requestSuccess, setRequestSuccess] = useState('');
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [transfusionDate, setTransfusionDate] = useState('');
 
   const patientId = user?.linked_patient_id;
   const [profile, setProfile] = useState<any>(null);
@@ -89,12 +91,19 @@ export default function PatientDashboard() {
 
   const isOverdue = daysUntil < 0;
   
-  const handleRequestBlood = async () => {
+  const handleRequestBloodClick = () => {
+    const today = new Date().toISOString().split('T')[0];
+    setTransfusionDate(profile.next_transfusion_date?.split('T')[0] || today);
+    setShowRequestModal(true);
+  };
+
+  const submitBloodRequest = async () => {
+    setShowRequestModal(false);
     setRequesting(true);
     try {
-      const data = await patientsApi.requestBlood(patientId!, { top_n: 1, max_distance_km: 200 });
+      const data = await patientsApi.requestBlood(patientId!, { top_n: 5, max_distance_km: 200, date_of_transfusion: transfusionDate });
       setRequestSuccess(
-        `Success! The BloodBridge AI has matched you with ${data.matches_found} compatible donors nearby and successfully sent WhatsApp alerts to ${data.messages_sent} of them. You will be notified when they reply.`
+        `Success! BloodBridge AI has queued ${data.matches_found} compatible donors. A WhatsApp alert has been sent to the Top Match. If they don't reply within 5 minutes, we will automatically escalate to the next donor in the queue.`
       );
       // Reload matches
       const newMatches = await matchesApi.list({ patient_id: patientId });
@@ -103,7 +112,7 @@ export default function PatientDashboard() {
       console.error("Failed to request blood", err);
     } finally {
       setRequesting(false);
-      setTimeout(() => setRequestSuccess(''), 5000);
+      setTimeout(() => setRequestSuccess(''), 10000);
     }
   };
 
@@ -308,7 +317,7 @@ export default function PatientDashboard() {
                 <div className="w-full md:w-auto shrink-0">
                   <Button 
                     size="lg"
-                    onClick={handleRequestBlood}
+                    onClick={handleRequestBloodClick}
                     disabled={requesting}
                     className="w-full md:w-auto min-w-[200px] bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white shadow-lg shadow-red-500/30 text-lg px-8 h-14 rounded-xl"
                   >
@@ -474,6 +483,65 @@ export default function PatientDashboard() {
           </Card>
         </div>
       </div>
+
+      {/* Date Selection Modal */}
+      <AnimatePresence>
+        {showRequestModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl"
+            >
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+                  <Calendar className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Transfusion Date</h3>
+                  <p className="text-sm text-gray-500">When do you need the blood?</p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Select Date</label>
+                  <input 
+                    type="date" 
+                    value={transfusionDate}
+                    onChange={(e) => setTransfusionDate(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 outline-none"
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+                
+                <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex gap-3 text-blue-800">
+                  <Activity className="w-5 h-5 shrink-0" />
+                  <p className="text-sm">We will match up to 5 donors and message them one-by-one until someone confirms.</p>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => setShowRequestModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                    onClick={submitBloodRequest}
+                  >
+                    Confirm & Request
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

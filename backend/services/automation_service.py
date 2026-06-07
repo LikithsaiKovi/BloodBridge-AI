@@ -98,10 +98,11 @@ def run_outreach_automation() -> Dict:
     }
 
 
-def request_blood_for_patient(patient_id: str, top_n: int = 3, max_distance_km: float = 200.0) -> Dict:
+def request_blood_for_patient(patient_id: str, top_n: int = 5, max_distance_km: float = 200.0) -> Dict:
     """
-    One-click patient request: find the best exact blood-group donors and send
-    one WhatsApp alert to each selected donor.
+    Cascading outreach: Finds top N donors. Messages Donor #1 immediately.
+    Queues Donors #2-N. If Donor #1 doesn't respond within the time limit,
+    the background job will escalate to Donor #2.
     """
     patient = patients_repo.get_by_id("patient_id", patient_id)
     if not patient:
@@ -117,63 +118,57 @@ def request_blood_for_patient(patient_id: str, top_n: int = 3, max_distance_km: 
             "donors_contacted": [],
         }
 
-    patient_bg = normalize_blood_group(patient.get("blood_group"))
-    same_group_matches = _existing_same_group_matches(patient, patient_bg, top_n)
-
-    if len(same_group_matches) < top_n:
-        new_matches = find_top_donors(patient_id, max_distance_km=max_distance_km, top_n=max(top_n * 4, 12))
-        existing_donor_ids = {match["donor_id"] for match in same_group_matches}
-        for match in new_matches:
-            donor_bg = normalize_blood_group(match.donor_blood_group)
-            if donor_bg == patient_bg and match.donor_id not in existing_donor_ids:
-                same_group_matches.append({
-                    "match_id": match.match_id,
-                    "donor_id": match.donor_id,
-                    "match_score": match.match_score,
-                    "distance_km": match.distance_km,
-                })
-                existing_donor_ids.add(match.donor_id)
-            if len(same_group_matches) >= top_n:
-                break
-
+    # Generate matches (they are initially saved as 'pending' by find_top_donors)
+    new_matches = find_top_donors(patient_id, max_distance_km=max_distance_km, top_n=top_n)
+    
     messages_sent = 0
     messages_queued = 0
     donors_contacted = []
 
-    for match in same_group_matches:
-        donor = donors_repo.get_by_id("donor_id", match["donor_id"])
+    for idx, match in enumerate(new_matches):
+        donor = donors_repo.get_by_id("donor_id", match.donor_id)
         if not _donor_can_receive_outreach(donor):
+            # Mark this match as skipped in DB
+            matches_repo.update("match_id", match.match_id, {"status": "skipped_not_eligible"})
             continue
 
-        detail = _match_detail_from_request_match(patient, match)
-        message_body = _build_direct_patient_request_message(donor, detail)
-        result = _send_or_queue_donor_message(
-            donor=donor,
-            matches=[detail],
-            message_body=message_body,
-            message_type="patient_request",
-            force_send=True, # Always force send on manual button click
-        )
-
-        if result["status"] == "sent":
-            messages_sent += 1
-        elif result["status"] == "queued":
-            messages_queued += 1
+        detail = _match_detail_from_request_match(patient, {"donor_id": match.donor_id, "distance_km": match.distance_km, "match_score": match.match_score})
+        
+        # Only message the FIRST eligible donor in the list
+        if messages_sent == 0:
+            # Donor 1: Keep status as 'pending' and send message immediately
+            message_body = _build_direct_patient_request_message(donor, detail)
+            result = _send_or_queue_donor_message(
+                donor=donor,
+                matches=[detail],
+                message_body=message_body,
+                message_type="patient_request",
+                force_send=True,
+            )
+            if result["status"] == "sent":
+                messages_sent += 1
+            else:
+                messages_queued += 1
+            status_label = result["status"]
+        else:
+            # Donor 2+: Change match status to 'queued' and do NOT send message yet
+            matches_repo.update("match_id", match.match_id, {"status": "queued"})
+            status_label = "queued"
 
         donors_contacted.append({
             "donor_id": donor["donor_id"],
             "donor_name": donor.get("name", "Donor"),
             "blood_group": donor.get("blood_group"),
             "distance_km": detail["distance_km"],
-            "match_score": match.get("match_score"),
-            "message_status": result["status"],
+            "match_score": match.match_score,
+            "message_status": status_label,
         })
 
     return {
         "status": "success",
         "patient_id": patient_id,
         "patient_blood_group": patient.get("blood_group"),
-        "matches_found": len(same_group_matches),
+        "matches_found": len(new_matches),
         "messages_sent": messages_sent,
         "messages_queued": messages_queued,
         "donors_contacted": donors_contacted,
@@ -440,39 +435,38 @@ def send_pending_reminders() -> Dict:
 
 def escalate_expired_matches() -> Dict:
     """
-    Escalate pending matches after the configured timeout, but only after a
-    reminder has been attempted. Declined/expired donors are excluded by the
-    matching service when it creates the next donor set.
+    Escalate pending matches that have passed the cascading timeout limit.
+    Moves to the next 'queued' donor for the patient.
     """
-    from routers.settings_router import get_settings
     logger.info("Checking for expired pending matches...")
     now = datetime.utcnow()
-    dynamic_settings = get_settings()
-    limit_time = now - timedelta(hours=dynamic_settings["donor_escalation_after_hours"])
+    # Fixed 5-minute timeout for hackathon/testing purposes
+    timeout_minutes = 5
+    limit_time = now - timedelta(minutes=timeout_minutes)
 
     pending_matches = matches_repo.get_all(filters={"status": "pending"}, limit=1000)
     escalations_triggered = 0
     details = []
 
     for match in pending_matches:
-        created_at = _parse_utc(match.get("created_at"))
-        if not created_at or created_at > limit_time:
-            continue
-
-        if not _has_sent_interaction(match["donor_id"], match["patient_id"], "reminder"):
+        # Check if it was updated/created recently
+        last_updated = _parse_utc(match.get("updated_at") or match.get("created_at"))
+        if not last_updated or last_updated > limit_time:
             continue
 
         try:
+            # 1. Mark current pending match as declined due to timeout
             matches_repo.update("match_id", match["match_id"], {
                 "status": "declined",
-                "notes": "Escalated: No response from donor after reminder",
+                "notes": "Escalated: No response from donor within 5 minute time limit",
+                "updated_at": now_iso()
             })
 
             interactions_repo.put({
                 "interaction_id": f"I-{new_id()}",
                 "donor_id": match["donor_id"],
                 "patient_id": match["patient_id"],
-                "message": "System match expired after reminder",
+                "message": "System match expired. Escalated to next donor in queue.",
                 "language": "English",
                 "message_type": "escalation",
                 "channel": "System",
@@ -481,15 +475,43 @@ def escalate_expired_matches() -> Dict:
                 "timestamp": now_iso(),
             })
 
-            from services.automation_service import request_blood_for_patient
-            request_blood_for_patient(match["patient_id"], top_n=1)
+            # 2. Find the NEXT queued match for this patient
+            patient_matches = matches_repo.get_all(filters={"patient_id": match["patient_id"]})
+            queued_matches = [m for m in patient_matches if m.get("status") == "queued"]
+            
+            if queued_matches:
+                # Sort by match_score descending
+                queued_matches.sort(key=lambda m: m.get("match_score", 0), reverse=True)
+                next_match = queued_matches[0]
+                
+                # 3. Promote queued match to pending
+                matches_repo.update("match_id", next_match["match_id"], {"status": "pending", "updated_at": now_iso()})
+                
+                # 4. Send the message
+                donor = donors_repo.get_by_id("donor_id", next_match["donor_id"])
+                patient = patients_repo.get_by_id("patient_id", next_match["patient_id"])
+                
+                if donor and _donor_can_receive_outreach(donor):
+                    detail = _match_detail_from_records(patient, next_match)
+                    message_body = _build_direct_patient_request_message(donor, detail)
+                    _send_or_queue_donor_message(
+                        donor=donor,
+                        matches=[detail],
+                        message_body=message_body,
+                        message_type="patient_request",
+                        force_send=True,
+                    )
+                
+                escalations_triggered += 1
+                details.append({
+                    "patient_id": match["patient_id"],
+                    "expired_donor_id": match["donor_id"],
+                    "escalated_to_donor_id": next_match["donor_id"],
+                    "status": "escalated",
+                })
+            else:
+                logger.info("Patient %s has no more queued donors to escalate to.", match["patient_id"])
 
-            escalations_triggered += 1
-            details.append({
-                "patient_id": match["patient_id"],
-                "expired_donor_id": match["donor_id"],
-                "status": "escalated",
-            })
         except Exception as exc:
             logger.error("Error escalating match %s: %s", match.get("match_id"), exc)
 
