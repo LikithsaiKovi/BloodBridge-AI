@@ -67,7 +67,8 @@ def seed_all():
     from config.settings import settings
     if settings.use_dynamodb:
         logger.info("Checking DynamoDB for existing data...")
-        if len(donors_repo.get_all(limit=1)) > 0:
+        # Check if both donors and patients exist. If either is missing, we should seed.
+        if len(donors_repo.get_all(limit=1)) > 0 and len(patients_repo.get_all(limit=1)) > 0:
             logger.info("DynamoDB already seeded, skipping seed_all().")
             return
         logger.info("Proceeding to seed DynamoDB...")
