@@ -279,7 +279,11 @@ export default function PatientDashboard() {
             <AlertTriangle className={`w-6 h-6 ${daysUntil <= 3 ? 'text-red-600 animate-pulse' : 'text-orange-600'}`} />
             <div>
               <p className="font-semibold">
-                {daysUntil <= 3 ? `URGENT: Your transfusion is in ${daysUntil} day(s).` : `Notice: Your transfusion is coming up in ${daysUntil} days.`}
+                {isOverdue 
+                  ? `URGENT: Your transfusion is OVERDUE by ${Math.abs(daysUntil)} day(s).` 
+                  : daysUntil <= 3 
+                    ? `URGENT: Your transfusion is in ${daysUntil} day(s).` 
+                    : `Notice: Your transfusion is coming up in ${daysUntil} days.`}
               </p>
               <p className="text-sm opacity-80">We are monitoring your matched donors and ensuring blood availability.</p>
             </div>
