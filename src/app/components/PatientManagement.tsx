@@ -47,9 +47,22 @@ const FORECAST_TIMELINE = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+function safeDate(dateStr: string) {
+  if (!dateStr) return new Date();
+  if (dateStr.includes('-')) {
+    const parts = dateStr.split('-');
+    if (parts[0].length === 2 && parts[2].length >= 4) {
+      // DD-MM-YYYY format
+      return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
+    }
+  }
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? new Date() : d;
+}
+
 function daysUntil(dateStr: string) {
-  const diff = Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
-  return diff;
+  const diff = Math.ceil((safeDate(dateStr).getTime() - Date.now()) / 86400000);
+  return isNaN(diff) ? 0 : diff;
 }
 
 function DaysBadge({ dateStr }: { dateStr: string }) {
@@ -262,7 +275,7 @@ function PatientDetailPanel({ patient, onClose, onFindDonors, matchingId }: Deta
               { label: 'City', value: patient.city, icon: MapPin },
               { label: 'Hospital', value: patient.hospital ?? '—', icon: Hospital },
               { label: 'Phone', value: patient.phone ?? '—', icon: Phone },
-              { label: 'Transfusion Date', value: new Date(patient.next_transfusion_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }), icon: Calendar },
+              { label: 'Transfusion Date', value: safeDate(patient.next_transfusion_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }), icon: Calendar },
             ].map((item, i) => (
               <div key={i} className="p-3 rounded-xl bg-gray-50 border border-gray-100">
                 <div className="flex items-center gap-1.5 mb-1">
@@ -280,7 +293,7 @@ function PatientDetailPanel({ patient, onClose, onFindDonors, matchingId }: Deta
               <div>
                 <p className="text-sm font-medium text-gray-700">Next Transfusion</p>
                 <p className="text-xs text-gray-500">
-                  {new Date(patient.next_transfusion_date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  {safeDate(patient.next_transfusion_date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </p>
               </div>
               <div className="text-right">

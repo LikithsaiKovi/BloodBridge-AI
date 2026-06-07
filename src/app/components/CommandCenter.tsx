@@ -193,12 +193,24 @@ export default function CommandCenter() {
     return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
   };
 
-  const daysLabel = (dateStr: string) => {
-    const diff = Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
+  function safeDate(dateStr: string) {
+    if (!dateStr) return new Date();
+    if (dateStr.includes('-')) {
+      const parts = dateStr.split('-');
+      if (parts[0].length === 2 && parts[2].length >= 4) {
+        return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
+      }
+    }
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? new Date() : d;
+  }
+
+  function daysLabel(dateStr: string) {
+    const diff = Math.ceil((safeDate(dateStr).getTime() - Date.now()) / 86400000);
     if (diff < 0) return { label: 'OVERDUE', cls: 'text-red-400' };
     if (diff === 0) return { label: 'TODAY', cls: 'text-orange-400' };
     return { label: `${diff}d away`, cls: 'text-slate-300' };
-  };
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 p-6 md:p-8">

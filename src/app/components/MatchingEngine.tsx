@@ -27,8 +27,20 @@ import { patientsApi, matchesApi, Patient, MatchResult } from '../../lib/api';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+function safeDate(dateStr: string) {
+  if (!dateStr) return new Date();
+  if (dateStr.includes('-')) {
+    const parts = dateStr.split('-');
+    if (parts[0].length === 2 && parts[2].length >= 4) {
+      return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
+    }
+  }
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? new Date() : d;
+}
+
 function daysUntil(dateStr: string): number {
-  const target = new Date(dateStr);
+  const target = safeDate(dateStr);
   const now = new Date();
   return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
@@ -366,7 +378,7 @@ export default function MatchingEngine() {
                           Next Transfusion
                         </div>
                         <div className="text-xs font-semibold text-gray-800">
-                          {new Date(selectedPatient.next_transfusion_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                          {safeDate(selectedPatient.next_transfusion_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                         </div>
                         <div className={`text-xs mt-0.5 font-medium ${days <= 3 ? 'text-red-600' : days <= 7 ? 'text-orange-600' : 'text-green-600'}`}>
                           {days <= 0 ? 'Today!' : `${days}d remaining`}
