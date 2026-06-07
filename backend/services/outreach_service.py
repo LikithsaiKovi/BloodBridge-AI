@@ -269,21 +269,13 @@ def _generate_with_bedrock(
             
         prompt += "Keep it warm, personal, and motivating. Max 150 words. End with 'BloodBridge AI 🩸'"
 
-        body = json.dumps({
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 300,
-            "messages": [{"role": "user", "content": prompt}]
-        })
-
-        response = client.invoke_model(
+        response = client.converse(
             modelId=settings.bedrock_model_id,
-            body=body,
-            contentType="application/json",
-            accept="application/json"
+            messages=[{"role": "user", "content": [{"text": prompt}]}],
+            inferenceConfig={"maxTokens": 300}
         )
 
-        result = json.loads(response["body"].read())
-        return result["content"][0]["text"]
+        return response["output"]["message"]["content"][0]["text"]
     except Exception as e:
         logger.error("Bedrock generation failed: %s", e)
         # Fallback to template

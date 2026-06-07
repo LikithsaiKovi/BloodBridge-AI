@@ -236,22 +236,14 @@ def _bedrock_chat(message: str) -> str:
             "Keep responses under 300 words. End with an encouraging note when appropriate."
         )
 
-        body = json.dumps({
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 500,
-            "system": system_prompt,
-            "messages": [{"role": "user", "content": message}]
-        })
-
-        response = client.invoke_model(
+        response = client.converse(
             modelId=settings.bedrock_model_id,
-            body=body,
-            contentType="application/json",
-            accept="application/json"
+            messages=[{"role": "user", "content": [{"text": message}]}],
+            system=[{"text": system_prompt}],
+            inferenceConfig={"maxTokens": 500}
         )
 
-        result = json.loads(response["body"].read())
-        return result["content"][0]["text"]
+        return response["output"]["message"]["content"][0]["text"]
     except Exception as e:
         logger.error("Bedrock chat failed: %s", e)
         return get_local_response(message)

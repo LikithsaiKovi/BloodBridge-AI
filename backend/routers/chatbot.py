@@ -38,10 +38,13 @@ def ai_scheduler_chat(req: ChatRequest):
             kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
         client = boto3.client("bedrock-runtime", **kwargs)
         
-        # Format history for Claude 3 Messages API
-        formatted_messages = []
+        converse_messages = []
         for m in req.messages:
-            formatted_messages.append({"role": m.role if m.role in ["user", "assistant"] else "user", "content": m.content})
+            role = m.role if m.role in ["user", "assistant"] else "user"
+            converse_messages.append({
+                "role": role,
+                "content": [{"text": m.content}]
+            })
             
         system_prompt = (
             "You are an AI Scheduling Assistant for BloodBridge AI Coordinators. "
@@ -51,50 +54,47 @@ def ai_scheduler_chat(req: ChatRequest):
             "Keep your responses concise, professional, and helpful."
         )
         
-        tools = [
+        converse_tools = [
             {
-                "name": "run_outreach_automation",
-                "description": "Trigger the backend automation job that finds critical patients, runs AI matching, and sends WhatsApp messages to top donors automatically.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {}
+                "toolSpec": {
+                    "name": "run_outreach_automation",
+                    "description": "Trigger the backend automation job that finds critical patients, runs AI matching, and sends WhatsApp messages to top donors automatically.",
+                    "inputSchema": {
+                        "json": {
+                            "type": "object",
+                            "properties": {}
+                        }
+                    }
                 }
             }
         ]
-        
-        body = {
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 512,
-            "system": system_prompt,
-            "messages": formatted_messages,
-            "tools": tools,
-            "temperature": 0.2
-        }
 
-        response = client.invoke_model(
+        response = client.converse(
             modelId=settings.bedrock_model_id,
-            body=json.dumps(body),
-            contentType="application/json",
-            accept="application/json"
+            messages=converse_messages,
+            system=[{"text": system_prompt}],
+            inferenceConfig={"maxTokens": 512, "temperature": 0.2},
+            toolConfig={"tools": converse_tools}
         )
         
-        result = json.loads(response["body"].read())
+        output_message = response['output']['message']
         
         # Handle Tool Call
-        if result["stop_reason"] == "tool_use":
-            for content_block in result["content"]:
-                if content_block["type"] == "tool_use":
-                    tool_name = content_block["name"]
-                    if tool_name == "run_outreach_automation":
-                        logger.info("AI invoked run_outreach_automation tool")
-                        res = run_outreach_automation()
-                        
-                        # Return final summary directly since we don't strictly need a second loop for simple tasks
-                        summary = f"Automation completed successfully. Processed {res['patients_processed']} critical patients and sent {res['messages_sent']} WhatsApp notifications to matched donors."
-                        return {"response": summary}
-                        
+        for content in output_message['content']:
+            if 'toolUse' in content:
+                tool_use = content['toolUse']
+                if tool_use['name'] == 'run_outreach_automation':
+                    logger.info("AI invoked run_outreach_automation tool")
+                    res = run_outreach_automation()
+                    
+                    summary = f"Automation completed successfully. Processed {res['patients_processed']} critical patients and sent {res['messages_sent']} WhatsApp notifications to matched donors."
+                    return {"response": summary}
+                    
         # Standard response
-        text = "".join([c["text"] for c in result["content"] if c["type"] == "text"])
+        text = ""
+        for content in output_message['content']:
+            if 'text' in content:
+                text += content['text']
         return {"response": text}
         
     except Exception as e:
