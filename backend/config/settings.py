@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     # AI
     use_bedrock: bool = False
     bedrock_region: str = "us-east-1"
-    bedrock_model_id: str = "anthropic.claude-3-haiku-20240307-v1:0"
+    bedrock_model_id: str = "anthropic.claude-3-5-haiku-20241022-v1:0"
 
     # ML
     model_path: str = "./ml/models/donor_model.pkl"
