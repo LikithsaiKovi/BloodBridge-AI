@@ -32,7 +32,11 @@ def ai_scheduler_chat(req: ChatRequest):
 
     try:
         import boto3
-        client = boto3.client("bedrock-runtime", region_name=settings.aws_region)
+        kwargs = {"region_name": settings.aws_region}
+        if settings.aws_access_key_id and settings.aws_access_key_id != "local":
+            kwargs["aws_access_key_id"] = settings.aws_access_key_id
+            kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
+        client = boto3.client("bedrock-runtime", **kwargs)
         
         # Format history for Claude 3 Messages API
         formatted_messages = []
