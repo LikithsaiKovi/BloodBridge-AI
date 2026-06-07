@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     use_bedrock: bool = True
     bedrock_region: str = "us-east-1"
     bedrock_model_id: str = "meta.llama3-70b-instruct-v1:0"
+    grok_api_key: Optional[str] = None
 
     # ML
     model_path: str = "./ml/models/donor_model.pkl"
