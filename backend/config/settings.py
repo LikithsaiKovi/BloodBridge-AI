@@ -27,7 +27,7 @@ class Settings(BaseSettings):
 
     # AI
     use_bedrock: bool = False
-    bedrock_model_id: str = "anthropic.claude-haiku-20240307-v1:0"
+    bedrock_model_id: str = "anthropic.claude-3-haiku-20240307-v1:0"
 
     # ML
     model_path: str = "./ml/models/donor_model.pkl"
