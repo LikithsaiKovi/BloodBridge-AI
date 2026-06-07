@@ -397,7 +397,7 @@ export default function MatchingEngine() {
                     <div className="flex items-center gap-2 mb-4">
                       <Badge className={`text-xs border ${urgencyColor(selectedPatient.urgency_level)}`} variant="outline">
                         <AlertTriangle className="w-3 h-3 mr-1" />
-                        {selectedPatient.urgency_level.charAt(0).toUpperCase() + selectedPatient.urgency_level.slice(1)} Priority
+                        {(selectedPatient.urgency_level || 'medium').charAt(0).toUpperCase() + (selectedPatient.urgency_level || 'medium').slice(1)} Priority
                       </Badge>
                       {selectedPatient.hospital && (
                         <Badge variant="outline" className="text-xs text-gray-600 border-gray-200">

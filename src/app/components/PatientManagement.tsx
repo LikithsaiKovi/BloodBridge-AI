@@ -258,8 +258,8 @@ function PatientDetailPanel({ patient, onClose, onFindDonors, matchingId }: Deta
             <h2 className="text-2xl font-semibold mb-1">{patient.name}</h2>
             <p className="text-white/80 text-sm">Patient ID: P-{patient.patient_id.slice(-4)}</p>
             <div className="flex items-center gap-2 mt-3">
-              <Badge className="bg-white/20 text-white border-0 text-xs">{patient.urgency_level.toUpperCase()}</Badge>
-              <Badge className="bg-white/20 text-white border-0 text-xs">{patient.status.toUpperCase()}</Badge>
+              <Badge className="bg-white/20 text-white border-0 text-xs">{(patient.urgency_level || 'MEDIUM').toUpperCase()}</Badge>
+              <Badge className="bg-white/20 text-white border-0 text-xs">{(patient.status || 'ACTIVE').toUpperCase()}</Badge>
             </div>
           </div>
         </div>
