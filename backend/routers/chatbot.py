@@ -99,4 +99,4 @@ def ai_scheduler_chat(req: ChatRequest):
         
     except Exception as e:
         logger.error("Chatbot Error: %s", e)
-        return {"response": "I encountered an error connecting to the AI brain. But I can tell you that the automation service is available. (Local Fallback)"}
+        return {"response": f"AWS Error: {str(e)}"}
