@@ -12,6 +12,7 @@ import { Input } from './ui/input';
 import { Progress } from './ui/progress';
 import { patientsApi, Patient } from '../../lib/api';
 import { wsManager } from '../../lib/websocket';
+import { ErrorBoundary } from './ErrorBoundary';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -812,12 +813,14 @@ export default function PatientManagement() {
       {/* ── Patient Detail Panel ─────────────────────────────────────────────── */}
       <AnimatePresence>
         {selectedPatient && (
-          <PatientDetailPanel
-            patient={selectedPatient}
-            onClose={() => setSelectedPatient(null)}
-            onFindDonors={handleFindDonors}
-            matchingId={matchingId}
-          />
+          <ErrorBoundary>
+            <PatientDetailPanel
+              patient={selectedPatient}
+              onClose={() => setSelectedPatient(null)}
+              onFindDonors={handleFindDonors}
+              matchingId={matchingId}
+            />
+          </ErrorBoundary>
         )}
       </AnimatePresence>
     </div>
