@@ -82,33 +82,36 @@ def ai_scheduler_chat(req: ChatRequest):
             }
         ]
 
-        response = client.converse(
-            modelId=settings.bedrock_model_id,
-            messages=converse_messages,
-            system=[{"text": system_prompt}],
-            inferenceConfig={"maxTokens": 512, "temperature": 0.2},
-            toolConfig={"tools": converse_tools}
-        )
-        
-        output_message = response['output']['message']
-        
-        # Handle Tool Call
-        for content in output_message['content']:
-            if 'toolUse' in content:
-                tool_use = content['toolUse']
-                if tool_use['name'] == 'run_outreach_automation':
-                    logger.info("AI invoked run_outreach_automation tool")
-                    res = run_outreach_automation()
-                    
-                    summary = f"Automation completed successfully. Processed {res['patients_processed']} critical patients and sent {res['messages_sent']} WhatsApp notifications to matched donors."
-                    return {"response": summary}
-                    
-        # Standard response
-        text = ""
-        for content in output_message['content']:
-            if 'text' in content:
-                text += content['text']
-        return {"response": text}
+        try:
+            response = client.converse(
+                modelId=settings.bedrock_model_id,
+                messages=converse_messages,
+                system=[{"text": system_prompt}],
+                inferenceConfig={"maxTokens": 512, "temperature": 0.2},
+                toolConfig={"tools": converse_tools}
+            )
+            
+            output_message = response['output']['message']
+            
+            # Handle Tool Call
+            for content in output_message['content']:
+                if 'toolUse' in content:
+                    tool_use = content['toolUse']
+                    if tool_use['name'] == 'run_outreach_automation':
+                        logger.info("AI invoked run_outreach_automation tool")
+                        res = run_outreach_automation()
+                        return {"response": f"✅ Automation complete! Sent {res['messages_sent']} WhatsApp alerts for {res['patients_processed']} critical patients."}
+            
+            # Return regular text
+            return {"response": output_message['content'][0]['text']}
+            
+        except Exception as e:
+            logger.warning(f"Bedrock API failed or does not support tools. Falling back to manual logic. Error: {e}")
+            user_msg = req.messages[-1].content.lower()
+            if "run" in user_msg or "schedule" in user_msg or "automate" in user_msg or "outreach" in user_msg:
+                res = run_outreach_automation()
+                return {"response": f"✅ Outreach automation triggered successfully! Sent {res['messages_sent']} messages for {res['patients_processed']} critical patients."}
+            return {"response": "I am the AI Scheduling Assistant. (Bedrock models are currently restricted on your AWS account, running in local fallback mode). You can say 'run outreach automation' and I will trigger it manually for you."}
         
     except Exception as e:
         logger.error("Chatbot Error: %s", e)
