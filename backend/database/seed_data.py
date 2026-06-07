@@ -64,22 +64,34 @@ def get_badge(donations: int) -> str:
 
 def seed_all():
     # Only seed if database is empty to prevent slow boot
-    with get_db() as conn:
-        count = conn.execute("SELECT COUNT(*) FROM donors").fetchone()[0]
-        if count > 0:
-            logger.info("Database already seeded, skipping seed_all().")
+    from config.settings import settings
+    if settings.use_dynamodb:
+        logger.info("Checking DynamoDB for existing data...")
+        if len(donors_repo.get_all(limit=1)) > 0:
+            logger.info("DynamoDB already seeded, skipping seed_all().")
             return
-    
-    logger.info("Dropping existing data...")
-    with get_db() as conn:
-        conn.execute("DELETE FROM donors")
-        conn.execute("DELETE FROM patients")
-        try:
-            conn.execute("DELETE FROM matches")
-            conn.execute("DELETE FROM interactions")
-        except:
-            pass
-        conn.commit()
+        logger.info("Proceeding to seed DynamoDB...")
+    else:
+        with get_db() as conn:
+            # Ensure tables exist before querying
+            try:
+                count = conn.execute("SELECT COUNT(*) FROM donors").fetchone()[0]
+                if count > 0:
+                    logger.info("SQLite database already seeded, skipping seed_all().")
+                    return
+            except Exception:
+                pass # Tables don't exist yet
+        
+        logger.info("Dropping existing data from SQLite...")
+        with get_db() as conn:
+            try:
+                conn.execute("DELETE FROM donors")
+                conn.execute("DELETE FROM patients")
+                conn.execute("DELETE FROM matches")
+                conn.execute("DELETE FROM interactions")
+                conn.commit()
+            except Exception:
+                pass
     
     logger.info("Reading Dataset.csv...")
     try:
