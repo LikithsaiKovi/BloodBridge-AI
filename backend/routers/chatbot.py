@@ -53,15 +53,11 @@ def ai_scheduler_chat(req: ChatRequest):
         
         tools = [
             {
-                "toolSpec": {
-                    "name": "run_outreach_automation",
-                    "description": "Trigger the backend automation job that finds critical patients, runs AI matching, and sends WhatsApp messages to top donors automatically.",
-                    "inputSchema": {
-                        "json": {
-                            "type": "object",
-                            "properties": {}
-                        }
-                    }
+                "name": "run_outreach_automation",
+                "description": "Trigger the backend automation job that finds critical patients, runs AI matching, and sends WhatsApp messages to top donors automatically.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {}
                 }
             }
         ]
