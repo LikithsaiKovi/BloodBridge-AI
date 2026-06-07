@@ -250,7 +250,7 @@ def _generate_with_bedrock(
         import boto3
         import json
 
-        kwargs = {"region_name": settings.aws_region}
+        kwargs = {"region_name": settings.bedrock_region}
         if settings.aws_access_key_id and settings.aws_access_key_id != "local":
             kwargs["aws_access_key_id"] = settings.aws_access_key_id
             kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
