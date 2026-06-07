@@ -41,10 +41,23 @@ def ai_scheduler_chat(req: ChatRequest):
         converse_messages = []
         for m in req.messages:
             role = m.role if m.role in ["user", "assistant"] else "user"
+            
+            # 1. Skip leading non-user messages
+            if not converse_messages and role != "user":
+                continue
+                
+            # 2. Merge consecutive messages of the same role
+            if converse_messages and converse_messages[-1]["role"] == role:
+                converse_messages[-1]["content"][0]["text"] += "\n" + m.content
+                continue
+                
             converse_messages.append({
                 "role": role,
                 "content": [{"text": m.content}]
             })
+            
+        if not converse_messages:
+            converse_messages.append({"role": "user", "content": [{"text": "Hello"}]})
             
         system_prompt = (
             "You are an AI Scheduling Assistant for BloodBridge AI Coordinators. "
