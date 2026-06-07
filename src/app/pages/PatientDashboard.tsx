@@ -192,20 +192,20 @@ export default function PatientDashboard() {
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
         
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4 text-center md:text-left">
-            <Avatar className="w-20 h-20 border-4 border-white/20 shadow-lg hidden sm:block">
+          <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left w-full md:w-auto">
+            <Avatar className="w-20 h-20 border-4 border-white/20 shadow-lg">
               <AvatarFallback className="bg-white/20 text-white text-2xl font-bold backdrop-blur-xl">
                 {user?.avatar_initials || user?.name.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-2">
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mb-2">
                 <Badge variant="secondary" className="bg-white/20 text-white border-0 backdrop-blur-md">
                   <Shield className="w-3 h-3 mr-1" /> Thalassemia Patient
                 </Badge>
               </div>
               <h1 className="text-3xl md:text-4xl font-bold mb-2">Hi, {user?.name.split(' ')[0]}</h1>
-              <div className="flex items-center justify-center md:justify-start gap-3">
+              <div className="flex items-center justify-center sm:justify-start gap-3 mb-4">
                 <Badge className="bg-gradient-to-r from-red-500 to-pink-500 text-white border-0 text-sm px-3 py-1">
                   {profile.blood_group}
                 </Badge>
@@ -213,38 +213,26 @@ export default function PatientDashboard() {
                   <MapPin className="w-4 h-4" /> {profile.city || 'Unknown City'}
                 </span>
               </div>
-            </div>
-            {/* Action Buttons */}
-            <div className="absolute top-0 right-0 p-4 flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleOpenEditModal}
-                className="bg-white/10 text-white hover:bg-white/20 border-white/30 hidden sm:flex"
-              >
-                <Edit className="w-4 h-4 mr-2" /> Edit Profile
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleDeleteAccount}
-                disabled={deletingAccount}
-                className="bg-red-500/10 text-red-100 hover:bg-red-500/20 border-red-500/30"
-              >
-                {deletingAccount ? 'Deleting...' : 'Delete Account'}
-              </Button>
-            </div>
-            
-            {/* Mobile Edit Button */}
-            <div className="sm:hidden absolute top-14 right-4 mt-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleOpenEditModal}
-                className="bg-white/10 text-white hover:bg-white/20 border-white/30"
-              >
-                <Edit className="w-4 h-4 mr-2" /> Edit
-              </Button>
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleOpenEditModal}
+                  className="bg-white/10 text-white hover:bg-white/20 border-white/30 flex items-center"
+                >
+                  <Edit className="w-4 h-4 mr-2" /> Edit Profile
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleDeleteAccount}
+                  disabled={deletingAccount}
+                  className="bg-red-500/10 text-red-100 hover:bg-red-500/20 border-red-500/30 flex items-center"
+                >
+                  {deletingAccount ? 'Deleting...' : 'Delete Account'}
+                </Button>
+              </div>
             </div>
           </div>
 
